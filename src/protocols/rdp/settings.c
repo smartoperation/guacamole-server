@@ -120,6 +120,12 @@ const char* GUAC_RDP_CLIENT_ARGS[] = {
 
     "load-balance-info",
 
+    "proxy-type",
+    "proxy-hostname",
+    "proxy-port",
+    "proxy-username",
+    "proxy-password",
+
     "disable-copy",
     "disable-paste",
     
@@ -592,6 +598,14 @@ enum RDP_ARGS_IDX {
      * the connection broker, if a connection broker is being used.
      */
     IDX_LOAD_BALANCE_INFO,
+
+    /* TODO 説明 */
+
+    IDX_PROXY_TYPE,
+    IDX_PROXY_HOSTNAME,
+    IDX_PROXY_PORT,
+    IDX_PROXY_USERNAME,
+    IDX_PROXY_PASSWORD,
 
     /**
      * Whether outbound clipboard access should be blocked. If set to "true",
@@ -1158,6 +1172,46 @@ guac_rdp_settings* guac_rdp_parse_args(guac_user* user,
         guac_user_parse_args_string(user, GUAC_RDP_CLIENT_ARGS, argv,
                 IDX_LOAD_BALANCE_INFO, NULL);
 
+    /* TODO 説明 */
+
+    /* TODO 値の指定方法がこれでいいか? */
+    /*  */
+    if (strcmp(argv[IDX_PROXY_TYPE], "no_proxy") == 0) {
+        settings->proxy_type = PROXY_TYPE_IGNORE;
+    }
+    /*  */
+    else if (strcmp(argv[IDX_PROXY_TYPE], "http") == 0) {
+        guac_user_log(user, GUAC_LOG_INFO, "Proxy: http");
+        settings->proxy_type = PROXY_TYPE_HTTP;
+    }
+    /*  */
+    else if (strcmp(argv[IDX_PROXY_TYPE], "socks5") == 0) {
+        guac_user_log(user, GUAC_LOG_INFO, "Proxy: Socks 5");
+        settings->proxy_type = PROXY_TYPE_SOCKS;
+    }
+    /*  */
+    else {
+        guac_user_log(user, GUAC_LOG_INFO, "No proxy specified.");
+        settings->proxy_type = PROXY_TYPE_NONE;
+    }
+
+    settings->proxy_hostname =
+        guac_user_parse_args_string(user, GUAC_RDP_CLIENT_ARGS, argv,
+                IDX_PROXY_HOSTNAME, NULL);
+
+    /* TODO default -1 でよい? */
+    settings->proxy_port =
+        guac_user_parse_args_int(user, GUAC_RDP_CLIENT_ARGS, argv,
+                IDX_PROXY_PORT, -1);
+
+    settings->proxy_username =
+        guac_user_parse_args_string(user, GUAC_RDP_CLIENT_ARGS, argv,
+                IDX_PROXY_USERNAME, NULL);
+
+    settings->proxy_password =
+        guac_user_parse_args_string(user, GUAC_RDP_CLIENT_ARGS, argv,
+                IDX_PROXY_PASSWORD, NULL);
+
     /* Parse clipboard copy disable flag */
     settings->disable_copy =
         guac_user_parse_args_boolean(user, GUAC_RDP_CLIENT_ARGS, argv,
@@ -1266,6 +1320,11 @@ void guac_rdp_settings_free(guac_rdp_settings* settings) {
     /* Free load balancer information string */
     free(settings->load_balance_info);
     
+    /* TODO 説明 */
+    free(settings->proxy_hostname);
+    free(settings->proxy_username);
+    free(settings->proxy_password);
+
     /* Free Wake-on-LAN strings */
     free(settings->wol_mac_addr);
     free(settings->wol_broadcast_addr);
@@ -1509,6 +1568,16 @@ void guac_rdp_push_settings(guac_client* client,
     if (guac_settings->load_balance_info != NULL) {
         rdp_settings->LoadBalanceInfo = (BYTE*) guac_strdup(guac_settings->load_balance_info);
         rdp_settings->LoadBalanceInfoLength = strlen(guac_settings->load_balance_info);
+    }
+
+    /* TODO 説明 */
+    /* TODO type で見る？ */
+    if (guac_settings->proxy_hostname != NULL) {
+        rdp_settings->ProxyType = guac_settings->proxy_type;
+        rdp_settings->ProxyHostname = guac_strdup(guac_settings->proxy_hostname);
+        rdp_settings->ProxyPort = guac_settings->proxy_port;
+        rdp_settings->ProxyUsername = guac_strdup(guac_settings->proxy_username);
+        rdp_settings->ProxyPassword = guac_strdup(guac_settings->proxy_password);
     }
 
     rdp_settings->BitmapCacheEnabled = !guac_settings->disable_bitmap_caching;

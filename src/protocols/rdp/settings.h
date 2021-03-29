@@ -584,6 +584,13 @@ typedef struct guac_rdp_settings {
      * the connection broker, if a connection broker is being used.
      */
     char* load_balance_info;
+
+    /* TODO 説明を書く */
+    int proxy_type;
+    char* proxy_hostname;
+    int proxy_port;
+    char* proxy_username;
+    char* proxy_password;
     
     /**
      * Whether or not to send a magic WoL packet to wake up the host before
